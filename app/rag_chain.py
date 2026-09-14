@@ -68,10 +68,16 @@ def answer_question(
     llm=None,
     embeddings=None,
     persist_dir: str | None = None,
+    reranker=None,
 ) -> dict:
     """Answer a question against one collection, grounded in top-k chunks."""
     docs = vectorstore.similarity_search(
-        collection_name, question, k=k, embeddings=embeddings, persist_dir=persist_dir
+        collection_name,
+        question,
+        k=k,
+        embeddings=embeddings,
+        persist_dir=persist_dir,
+        reranker=reranker,
     )
     if not docs:
         # Nothing retrieved - refuse without spending an LLM call (FR6).

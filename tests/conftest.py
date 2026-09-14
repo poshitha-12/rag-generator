@@ -41,9 +41,25 @@ class FakeEmbeddings:
         return self._vector(text)
 
 
+class FakeReranker:
+    """Deterministic keyword-overlap reranker: no model download, but a
+    chunk sharing more words with the query still scores higher."""
+
+    def rerank(self, query, documents, batch_size=64, **kwargs):
+        q_tokens = {t.strip(".,!?;:'\"()") for t in query.lower().split()}
+        for doc in documents:
+            d_tokens = {t.strip(".,!?;:'\"()") for t in doc.lower().split()}
+            yield float(len(q_tokens & d_tokens))
+
+
 @pytest.fixture
 def embeddings():
     return FakeEmbeddings()
+
+
+@pytest.fixture
+def reranker():
+    return FakeReranker()
 
 
 @pytest.fixture

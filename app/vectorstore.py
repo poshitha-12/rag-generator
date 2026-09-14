@@ -15,6 +15,7 @@ from langchain_community.vectorstores import Chroma
 from app import config
 
 _embeddings = None
+_reranker = None
 
 
 def get_embeddings():
@@ -26,6 +27,16 @@ def get_embeddings():
         options = {"model_name": config.EMBEDDING_MODEL} if config.EMBEDDING_MODEL else {}
         _embeddings = FastEmbedEmbeddings(**options)
     return _embeddings
+
+
+def get_reranker():
+    """Local (ONNX, no API key) cross-encoder, loaded once per process."""
+    global _reranker
+    if _reranker is None:
+        from fastembed.rerank.cross_encoder import TextCrossEncoder
+
+        _reranker = TextCrossEncoder(model_name=config.RERANK_MODEL)
+    return _reranker
 
 
 def normalize_collection_name(name: str) -> str:
@@ -53,6 +64,13 @@ def get_store(
         collection_name=normalize_collection_name(collection_name),
         embedding_function=embeddings or get_embeddings(),
         persist_directory=persist_dir or config.CHROMA_PERSIST_DIR,
+        # Cosine distance keeps relevance scores on a fixed [0, 1] scale
+        # independent of embedding dimensionality/model, so
+        # SIMILARITY_THRESHOLD means the same thing across embedding
+        # models. Chroma's default (l2) relevance score is not
+        # comparably calibrated - e.g. it scores a correct match well
+        # below any sane threshold for some embedding spaces.
+        collection_metadata={"hnsw:space": "cosine"},
     )
 
 
@@ -93,10 +111,34 @@ def similarity_search(
     k: int = config.TOP_K,
     embeddings=None,
     persist_dir: str | None = None,
+    reranker=None,
 ):
-    """Top-k retrieval against one collection (FR5)."""
+    """Top-k retrieval against one collection (FR5), narrowed by a
+    similarity-score floor and a semantic rerank pass (FR6 hardening):
+
+    1. Pull a wider candidate pool by vector similarity.
+    2. Drop anything below SIMILARITY_THRESHOLD - a cheap gate against
+       off-topic questions, before any cross-encoder or LLM work happens.
+    3. Re-score the survivors with a cross-encoder, which reads the query
+       and each chunk together instead of comparing embedding vectors, and
+       keep the top k. Skipped when RERANK_ENABLED is false.
+    4. Optionally drop anything under RERANK_SCORE_THRESHOLD - the sharper
+       of the two gates, but corpus-specific, so it is off by default.
+    """
     store = get_store(collection_name, embeddings, persist_dir)
-    return store.similarity_search(query, k=k)
+    fetch_k = max(k, config.RERANK_FETCH_K) if config.RERANK_ENABLED else k
+
+    scored = store.similarity_search_with_relevance_scores(query, k=fetch_k)
+    candidates = [doc for doc, score in scored if score >= config.SIMILARITY_THRESHOLD]
+    if not candidates or not config.RERANK_ENABLED:
+        return candidates[:k]
+
+    reranker = reranker or get_reranker()
+    rerank_scores = reranker.rerank(query, [doc.page_content for doc in candidates])
+    ranked = sorted(zip(candidates, rerank_scores), key=lambda pair: pair[1], reverse=True)
+    if config.RERANK_SCORE_THRESHOLD is not None:
+        ranked = [p for p in ranked if p[1] >= config.RERANK_SCORE_THRESHOLD]
+    return [doc for doc, _ in ranked[:k]]
 
 
 def delete_collection(collection_name: str, persist_dir: str | None = None) -> None:

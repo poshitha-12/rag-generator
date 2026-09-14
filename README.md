@@ -31,14 +31,16 @@ flowchart LR
         VDB[(ChromaDB<br/>per-collection)]
     end
     subgraph QueryPath
-        RET[Retriever<br/>top-k similarity]
+        RET[Retriever<br/>vector candidates]
+        GATE[Similarity floor<br/>drops off-topic]
+        RERANK[Cross-encoder<br/>rerank to top-k]
         PROMPT[Prompt Builder<br/>context + question]
         LLM[LLM API<br/>Claude / GPT]
     end
     UI -- upload docs --> REDIS
     REDIS --> WORKER --> LOAD --> CHUNK --> EMB --> VDB
     UI -- question + collection_id --> RET
-    VDB --> RET --> PROMPT --> LLM --> UI
+    VDB --> RET --> GATE --> RERANK --> PROMPT --> LLM --> UI
 ```
 
 Uploads are enqueued to Redis and processed by an RQ worker, so ingesting a
@@ -145,6 +147,25 @@ the docker smoke test stays local since it needs a real API key to boot.
 
 - Embeddings run locally to avoid an extra API dependency and cost; generation still needs one LLM API key.
 - Chunking targets 800 chars with 100 overlap (`CHUNK_SIZE` / `CHUNK_OVERLAP`), but the target is a soft guide: splits land on paragraph then sentence boundaries, and only fall back to a space or raw cut when a single sentence is oversized (SPEC.md FR8). A production version would tune per document type or use semantic chunking.
+- Retrieval is two-stage: a wide vector fetch (`RERANK_FETCH_K`, default 20)
+  narrowed to `TOP_K` by a local cross-encoder rerank
+  (`Xenova/ms-marco-MiniLM-L-6-v2`, ONNX, no API key). Vector distance alone
+  is a coarse relevance signal; the cross-encoder reads query and chunk
+  together and discriminates far better. Set `RERANK_ENABLED=false` to fall
+  back to plain top-k.
+- Two relevance gates sit in front of generation, both off-by-default-ish and
+  tunable, because the right cut-off is corpus- and model-specific:
+  | Gate | Default | Measured on the sample corpus |
+  |---|---|---|
+  | `SIMILARITY_THRESHOLD` (cosine, 0-1) | `0.2` | on-topic ≈ 0.65-0.70, off-topic ≈ 0.40-0.50 — so 0.2 catches only true garbage, deliberately, since this gate runs *before* reranking and a high value starves it |
+  | `RERANK_SCORE_THRESHOLD` (raw logit) | blank (off) | on-topic ≈ -3.5, off-topic ≈ -11 — much sharper separation; enable once calibrated on your own documents |
+
+  Collections are created with cosine distance (`hnsw:space`) so these scores
+  stay on a consistent scale across embedding models — Chroma's l2 default
+  scored a correct match at 0.03 in testing, which no fixed threshold can use.
+- The final "I don't know" is still enforced in the prompt (SPEC.md FR6): the
+  thresholds cheaply refuse obvious misses before spending an LLM call, but
+  the model remains the backstop for context that's retrieved yet unhelpful.
 - No auth/multi-tenancy — out of scope for this exercise but noted as a next step.
 - No PR/branch workflow or pre-commit hook framework — for a solo, timeboxed
   build these add process overhead without much signal; commit-level
