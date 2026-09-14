@@ -91,10 +91,10 @@ def test_chunk_boundaries_are_sentence_aware():
     assert any(not c.endswith(TERMINATORS) for c in chunks), (
         "an oversized sentence must still be split"
     )
+    words = set(f"word{i}" for i in range(60)) | {"Short", "opener", "here.", "word59."}
     for chunk in chunks:
-        assert not re.search(r"word\d*$", chunk) or chunk.split()[-1].startswith(
-            "word"
-        ), "split should land on a space boundary"
+        for token in chunk.split():
+            assert token in words, f"split landed mid-word: {token!r}"
 
 
 def test_chunk_documents_attaches_citation_metadata():
