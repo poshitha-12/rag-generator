@@ -1,0 +1,21 @@
+name: verify
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: make test
+      - run: make lint
+      - run: make no-hardcoded
+
+# docker-smoke is intentionally NOT run here: it needs a real LLM API key
+# to boot the app, and this workflow has no secrets configured (a fake key
+# in a public repo's workflow file is still a bad habit worth not forming).
+# Run `make docker-smoke` locally before pushing instead.

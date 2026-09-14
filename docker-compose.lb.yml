@@ -1,0 +1,55 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  rag-app-1:
+    build: .
+    volumes:
+      - ./data:/app/data
+      - ./chroma_store:/app/chroma_store
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  rag-app-2:
+    build: .
+    volumes:
+      - ./data:/app/data
+      - ./chroma_store:/app/chroma_store
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  rag-worker:
+    build: .
+    command: rq worker --url redis://redis:6379
+    volumes:
+      - ./data:/app/data
+      - ./chroma_store:/app/chroma_store
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - rag-app-1
+      - rag-app-2
+    restart: unless-stopped
