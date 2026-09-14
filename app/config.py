@@ -31,5 +31,5 @@ TOP_K = _int("TOP_K", 5)
 # --- generation ------------------------------------------------------------
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "anthropic").strip().lower()
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0"))
