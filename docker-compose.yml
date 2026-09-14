@@ -5,6 +5,9 @@ services:
 
   rag-generator:
     build: .
+    # One image serves both the UI and the worker: building it twice in
+    # parallel just doubles the (large) dependency download.
+    image: rag-generator:local
     ports:
       - "8501:8501"
     volumes:
@@ -19,7 +22,7 @@ services:
     restart: unless-stopped
 
   rag-worker:
-    build: .
+    image: rag-generator:local
     command: rq worker --url redis://redis:6379
     volumes:
       - ./data:/app/data
