@@ -25,7 +25,7 @@ flowchart LR
     subgraph Ingestion
         LOAD[Loader<br/>pdf/docx/txt]
         CHUNK[Chunker<br/>Recursive splitter]
-        EMB[Embedder<br/>MiniLM local]
+        EMB[Embedder<br/>FastEmbed local]
     end
     subgraph Storage
         VDB[(ChromaDB<br/>per-collection)]
@@ -69,7 +69,7 @@ files and picking a new collection name in the UI, nothing else.
 | Layer | Choice | Why |
 |---|---|---|
 | Orchestration | LangChain | fast to wire chains together |
-| Embeddings | sentence-transformers (MiniLM) | local, free, no API dependency |
+| Embeddings | FastEmbed (ONNX) | local, free, no API dependency |
 | Vector store | ChromaDB (persistent, local) | zero-ops, per-collection isolation |
 | Generation | Claude or GPT API (env-switchable) | grounded answer synthesis |
 | UI | Streamlit | fastest path to a usable demo |

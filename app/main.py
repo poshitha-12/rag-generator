@@ -10,7 +10,7 @@ Assumptions made while building (none of these are spec requirements):
   shows a processing state (FR3).
 - Retrieval is plain top-k similarity with k=5 (configurable via TOP_K);
   no reranking or hybrid search.
-- Embeddings run locally (MiniLM); only generation needs an API key, and
+- Embeddings run locally (FastEmbed); only generation needs an API key, and
   the LLM client is constructed lazily so the UI boots without one.
 """
 

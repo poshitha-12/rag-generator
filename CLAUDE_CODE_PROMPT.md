@@ -7,7 +7,7 @@ one commit at the end.
 **Implementation guidance (not in SPEC.md — these are stack/style choices,
 not requirements)**
 - Stack: Streamlit UI, LangChain for orchestration, ChromaDB (persistent,
-  local) for vector storage, sentence-transformers (all-MiniLM-L6-v2) for
+  local) for vector storage, FastEmbed (ONNX, local) for
   embeddings, Anthropic Claude by default / OpenAI as a fallback for
   generation (switchable via `LLM_PROVIDER` env var), RQ + Redis for the
   ingestion queue (packages and services are already in requirements.txt
