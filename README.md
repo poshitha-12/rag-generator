@@ -83,11 +83,16 @@ docker compose up --build
 ```
 Then open http://localhost:8501
 
+The first build downloads the ML dependencies and takes a while; the UI and
+the worker share one image (`rag-generator:local`) so it's only built once.
+
 ### Locally
 ```bash
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env      # fill in your API key
+docker compose up -d redis   # the ingestion queue needs Redis
+rq worker --url redis://localhost:6379 &   # in a second shell
 streamlit run app/main.py
 ```
 
@@ -99,8 +104,9 @@ rag-generator/
 │   ├── ingestion.py      # document loading + chunking
 │   ├── vectorstore.py    # Chroma collection management
 │   ├── rag_chain.py       # retrieval + grounded generation
+│   ├── jobs.py            # Redis/RQ ingestion queue
 │   └── config.py
-├── data/                  # sample documents for demoing
+├── data/                  # sample documents for demoing (two unrelated sets)
 ├── tests/
 ├── transcripts/            # exported AI agent build transcript
 ├── Dockerfile
@@ -110,7 +116,11 @@ rag-generator/
 
 ## Testing the "different document sets" requirement
 
-1. Upload document set A (e.g. a company handbook), ask questions, note grounded answers with citations.
+`data/` ships two unrelated sample sets so you can demo a domain switch
+without sourcing your own files. They are demo fixtures only — nothing in
+`app/` references them (that's what `make no-hardcoded` enforces).
+
+1. Upload document set A (e.g. the company handbook set), ask questions, note grounded answers with citations.
 2. Upload document set B (an unrelated domain), ask questions — same app, zero code changes.
 3. Ask a question with no answer in the context — the system should say it doesn't know rather than hallucinate.
 
@@ -134,7 +144,7 @@ the docker smoke test stays local since it needs a real API key to boot.
 ## Notes / trade-offs
 
 - Embeddings run locally to avoid an extra API dependency and cost; generation still needs one LLM API key.
-- Chunking is fixed at 800/100 — a production version would tune this per document type or use semantic chunking.
+- Chunking targets 800 chars with 100 overlap (`CHUNK_SIZE` / `CHUNK_OVERLAP`), but the target is a soft guide: splits land on paragraph then sentence boundaries, and only fall back to a space or raw cut when a single sentence is oversized (SPEC.md FR8). A production version would tune per document type or use semantic chunking.
 - No auth/multi-tenancy — out of scope for this exercise but noted as a next step.
 - No PR/branch workflow or pre-commit hook framework — for a solo, timeboxed
   build these add process overhead without much signal; commit-level
