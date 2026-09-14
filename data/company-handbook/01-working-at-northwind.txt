@@ -1,0 +1,32 @@
+Northwind Logistics — Employee Handbook
+Section 1: Working at Northwind
+
+Northwind Logistics is a fictional freight brokerage founded in 2011 and
+headquartered in Leeds. We coordinate road and rail freight for mid-sized
+manufacturers across the UK and northern Europe. This handbook is sample
+data used to demonstrate the RAG Generator; none of it describes a real
+company.
+
+Working hours. Our core hours are 10:00 to 16:00 local time. Outside core
+hours you are free to arrange your day as you see fit, provided your work
+is covered and your calendar is accurate. Operations staff on the dispatch
+rota work a fixed 07:00 to 15:30 shift, because carriers call early and
+someone must always answer.
+
+Remote work. Northwind is remote-first. Every role except dispatch and
+warehouse liaison can be performed from anywhere within three hours of UK
+time. Employees who wish to work from outside that band for more than four
+consecutive weeks need written approval from their manager and from People
+Operations, mainly so we can handle payroll and tax correctly.
+
+Office space. We keep two small offices, in Leeds and Rotterdam. Desks are
+not assigned; book one through the internal booking tool at least a day
+ahead. Meeting rooms may be booked for up to three hours at a time. The
+Leeds office is open from 08:00 to 19:00 on weekdays and is closed at
+weekends unless a dispatch incident is running.
+
+Equipment. New starters receive a laptop, a monitor, a headset and a chair
+allowance of £400. Replacement laptops are issued on a three-year cycle, or
+sooner if the machine fails. Damaged equipment should be reported to IT
+Support the same day; we do not deduct the cost of accidental damage from
+salary.

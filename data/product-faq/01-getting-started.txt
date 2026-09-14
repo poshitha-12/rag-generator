@@ -1,0 +1,28 @@
+Tidewater Sensors — Product FAQ
+Getting Started
+
+What is the Tidewater TS-40? The TS-40 is a fictional battery-powered water
+quality sensor used to monitor rivers, reservoirs and aquaculture ponds. It
+measures temperature, dissolved oxygen, turbidity and pH, and reports over
+cellular or LoRaWAN. This document is sample data for demonstrating the RAG
+Generator and does not describe a real product.
+
+How do I set up a new sensor? Unpack the sensor, remove the protective cap
+from the probe head, and press the pairing button for three seconds until
+the status light blinks amber. Open the Tidewater app, choose Add Device,
+and scan the QR code on the sensor housing. Setup usually takes under five
+minutes.
+
+How long does the battery last? A TS-40 running the default fifteen-minute
+reporting interval lasts about eighteen months on one battery pack. At a
+five-minute interval, expect roughly seven months. Cold water shortens
+battery life; below 4 degrees Celsius, plan for about 20 percent less.
+
+How deep can the sensor be deployed? The TS-40 is rated to 30 metres. The
+extended-cable variant, the TS-40L, reaches 100 metres but requires the
+powered surface buoy because the longer cable draws more current.
+
+What connectivity does it need? Either a cellular SIM, which ships
+pre-installed on cellular units, or a LoRaWAN gateway within about two
+kilometres in open terrain. Sensors buffer up to 30 days of readings
+locally, so a temporary loss of connectivity does not lose data.
