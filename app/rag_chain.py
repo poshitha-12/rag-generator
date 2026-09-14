@@ -80,7 +80,8 @@ def answer_question(
         reranker=reranker,
     )
     if not docs:
-        # Nothing retrieved - refuse without spending an LLM call (FR6).
+        # Nothing retrieved, or nothing that cleared the relevance floor -
+        # refuse without spending an LLM call (FR6).
         return {"answer": NO_ANSWER, "sources": [], "grounded": False}
 
     llm = llm or get_llm()

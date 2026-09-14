@@ -33,10 +33,14 @@ DOCS = [
 ]
 
 
-def test_grounded_answer_and_refusal(embeddings, reranker, persist_dir):
+def test_grounded_answer_and_refusal(embeddings, reranker, persist_dir, monkeypatch):
     ingest_documents(
         "policies", DOCS, embeddings=embeddings, persist_dir=persist_dir
     )
+    # The shipped floor is calibrated for the real cross-encoder's logits;
+    # FakeReranker scores word overlap, so set the floor on that scale -
+    # one shared word or better.
+    monkeypatch.setattr(config, "SIMILARITY_THRESHOLD", 1.0)
 
     # FR5 — answered from retrieved chunks, with file name + chunk index.
     llm = RecordingLLM("business day", "Within one business day [source: policy.txt, chunk 0].")
@@ -60,12 +64,13 @@ def test_grounded_answer_and_refusal(embeddings, reranker, persist_dir):
     assert "business day" in prompt
     assert rag_chain.NO_ANSWER in prompt, "prompt must instruct the refusal"
 
-    # FR6 — context that doesn't contain the answer produces a refusal,
-    # not an invented one, and no sources are cited.
-    llm = RecordingLLM("orbital mechanics", "...")
+    # FR6 — an off-domain question is refused by the threshold, before the
+    # LLM is reached: that comparison is the primary mechanism, and unlike
+    # a prompt instruction it can't be talked out of its answer.
+    llm = RecordingLLM("orbital mechanics", "should not be reached")
     result = rag_chain.answer_question(
         "policies",
-        "What is the delta-v budget for a lunar transfer?",
+        "Quel est le budget delta-v pour une injection lunaire?",
         k=4,
         llm=llm,
         embeddings=embeddings,
@@ -75,6 +80,7 @@ def test_grounded_answer_and_refusal(embeddings, reranker, persist_dir):
     assert result["answer"] == rag_chain.NO_ANSWER
     assert result["sources"] == []
     assert not result["grounded"]
+    assert llm.prompts == [], "the threshold must refuse before the LLM call"
 
 
 def test_empty_collection_refuses_without_calling_the_model(embeddings, reranker, persist_dir):
@@ -93,25 +99,94 @@ def test_empty_collection_refuses_without_calling_the_model(embeddings, reranker
     assert llm.prompts == [], "no LLM call should be made with no context"
 
 
-def test_off_topic_question_refuses_below_similarity_threshold(
-    embeddings, reranker, persist_dir, monkeypatch
-):
-    """FR6 hardening — a query whose best match is still a poor semantic
-    fit gets refused by the similarity-threshold gate, without ever
-    reaching the LLM (the reranker never runs either, since nothing
-    clears the gate for it to re-score)."""
-    monkeypatch.setattr(config, "SIMILARITY_THRESHOLD", 0.9)
+def test_prompt_refusal_backs_up_the_threshold(embeddings, reranker, persist_dir):
+    """FR6's second line of defense — a question close enough to the corpus
+    to clear the threshold, but whose retrieved context still doesn't
+    answer it, is refused by the model on the prompt's instruction. The
+    LLM *is* called here; that's the point of the layering."""
     ingest_documents("policies", DOCS, embeddings=embeddings, persist_dir=persist_dir)
-    llm = RecordingLLM("anything", "should not be reached")
+    llm = RecordingLLM("orbital mechanics", "should not be invented")
     result = rag_chain.answer_question(
         "policies",
-        "What is the airspeed velocity of an unladen swallow?",
+        "Which business day does the support desk ship hardware returns on?",
         k=4,
         llm=llm,
         embeddings=embeddings,
         persist_dir=persist_dir,
         reranker=reranker,
     )
+    assert llm.prompts, "this question should clear the threshold and reach the LLM"
     assert result["answer"] == rag_chain.NO_ANSWER
     assert result["sources"] == []
-    assert llm.prompts == [], "no LLM call should be made below the similarity floor"
+    assert not result["grounded"]
+
+
+class StubReranker:
+    """Scores one keyword above all else. The fakes used elsewhere in the
+    suite are both lexical (hashed bag-of-words embeddings, word-overlap
+    reranking), so they never disagree - and the real cross-encoder is an
+    80MB download that NFR2's 30s budget rules out of a unit test. So the
+    ordering test forces the disagreement explicitly: what it proves is
+    that the reranker's verdict, not vector distance, sets the final
+    order - not that the real model ranks any particular way."""
+
+    def __init__(self, keyword: str):
+        self.keyword = keyword
+
+    def rerank(self, query, documents, batch_size=64, **kwargs):
+        for doc in documents:
+            yield 5.0 if self.keyword.lower() in doc.lower() else 0.0
+
+
+# One file per topic, so each lands in its own chunk and the reranker has
+# genuinely competing candidates to order.
+RERANK_DOCS = [
+    ("rota.txt", b"Alpha bravo charlie: the dispatch rota is published every Monday."),
+    (
+        "refunds.txt",
+        b"Refunds are issued to the original payment method within ten days.",
+    ),
+    (
+        "overtime.txt",
+        b"Bravo charlie delta: overtime is approved by the shift supervisor.",
+    ),
+]
+
+
+def test_reranking_changes_chunk_order(embeddings, persist_dir):
+    """Reranking, not vector similarity, decides which chunks reach the
+    prompt and in what order."""
+    ingest_documents(
+        "manuals", RERANK_DOCS, embeddings=embeddings, persist_dir=persist_dir
+    )
+    question = "refunds payment method"
+
+    # Vector similarity ranks the refunds chunk top for this question...
+    llm = RecordingLLM("Refunds", "Within ten days [source: refunds.txt, chunk 0].")
+    rag_chain.answer_question(
+        "manuals",
+        question,
+        k=3,
+        llm=llm,
+        embeddings=embeddings,
+        persist_dir=persist_dir,
+        reranker=StubReranker("refunds"),
+    )
+    assert llm.prompts[0].index("Refunds") < llm.prompts[0].index("overtime")
+
+    # ...but a reranker that prefers the overtime chunk reorders the
+    # context the model actually sees.
+    llm = RecordingLLM("overtime", "Approved by the supervisor [source: overtime.txt, chunk 0].")
+    result = rag_chain.answer_question(
+        "manuals",
+        question,
+        k=3,
+        llm=llm,
+        embeddings=embeddings,
+        persist_dir=persist_dir,
+        reranker=StubReranker("overtime"),
+    )
+    assert llm.prompts[0].index("overtime") < llm.prompts[0].index("Refunds"), (
+        "the reranker's top-scored chunk must lead the prompt context"
+    )
+    assert result["sources"][0]["source"] == "overtime.txt"

@@ -64,13 +64,6 @@ def get_store(
         collection_name=normalize_collection_name(collection_name),
         embedding_function=embeddings or get_embeddings(),
         persist_directory=persist_dir or config.CHROMA_PERSIST_DIR,
-        # Cosine distance keeps relevance scores on a fixed [0, 1] scale
-        # independent of embedding dimensionality/model, so
-        # SIMILARITY_THRESHOLD means the same thing across embedding
-        # models. Chroma's default (l2) relevance score is not
-        # comparably calibrated - e.g. it scores a correct match well
-        # below any sane threshold for some embedding spaces.
-        collection_metadata={"hnsw:space": "cosine"},
     )
 
 
@@ -113,31 +106,29 @@ def similarity_search(
     persist_dir: str | None = None,
     reranker=None,
 ):
-    """Top-k retrieval against one collection (FR5), narrowed by a
-    similarity-score floor and a semantic rerank pass (FR6 hardening):
+    """Top-k retrieval against one collection (FR5), reranked and gated:
 
-    1. Pull a wider candidate pool by vector similarity.
-    2. Drop anything below SIMILARITY_THRESHOLD - a cheap gate against
-       off-topic questions, before any cross-encoder or LLM work happens.
-    3. Re-score the survivors with a cross-encoder, which reads the query
-       and each chunk together instead of comparing embedding vectors, and
-       keep the top k. Skipped when RERANK_ENABLED is false.
-    4. Optionally drop anything under RERANK_SCORE_THRESHOLD - the sharper
-       of the two gates, but corpus-specific, so it is off by default.
+    1. Pull a candidate pool wider than k by vector similarity.
+    2. Re-score every candidate with a cross-encoder, which reads the query
+       and the chunk together instead of comparing embedding vectors, and
+       order by that. Skipped when RERANK_ENABLED is false.
+    3. If the best candidate still scores below SIMILARITY_THRESHOLD,
+       return nothing: the collection has no answer to this question, and
+       the caller refuses without spending an LLM call (FR6).
     """
     store = get_store(collection_name, embeddings, persist_dir)
-    fetch_k = max(k, config.RERANK_FETCH_K) if config.RERANK_ENABLED else k
+    if not config.RERANK_ENABLED:
+        return store.similarity_search(query, k=k)
 
-    scored = store.similarity_search_with_relevance_scores(query, k=fetch_k)
-    candidates = [doc for doc, score in scored if score >= config.SIMILARITY_THRESHOLD]
-    if not candidates or not config.RERANK_ENABLED:
-        return candidates[:k]
+    candidates = store.similarity_search(query, k=max(k, config.RERANK_FETCH_K))
+    if not candidates:
+        return []
 
     reranker = reranker or get_reranker()
-    rerank_scores = reranker.rerank(query, [doc.page_content for doc in candidates])
-    ranked = sorted(zip(candidates, rerank_scores), key=lambda pair: pair[1], reverse=True)
-    if config.RERANK_SCORE_THRESHOLD is not None:
-        ranked = [p for p in ranked if p[1] >= config.RERANK_SCORE_THRESHOLD]
+    scores = reranker.rerank(query, [doc.page_content for doc in candidates])
+    ranked = sorted(zip(candidates, scores), key=lambda pair: pair[1], reverse=True)
+    if ranked[0][1] < config.SIMILARITY_THRESHOLD:
+        return []
     return [doc for doc, _ in ranked[:k]]
 
 
