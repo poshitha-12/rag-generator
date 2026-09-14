@@ -219,3 +219,26 @@ the docker smoke test stays local since it needs a real API key to boot.
 - No PR/branch workflow or pre-commit hook framework — for a solo, timeboxed
   build these add process overhead without much signal; commit-level
   discipline (see above) covers the same intent more cheaply.
+
+## Known limitations
+
+Found during a completion audit and left in place deliberately — each is
+recorded here rather than papered over.
+
+- **`docker-smoke` can validate an already-running container.** If the
+  rebuilt image is layer-identical to one already up, `docker compose up
+  --build` leaves the existing containers running and the health check hits
+  those rather than a genuinely fresh boot. NFR1 is confirmed independently
+  by a real clean-clone test (`git clone` to a temp directory, then
+  `docker compose up --build` as its own compose project), which is where
+  that guarantee actually comes from.
+- **`make verify` stops any running dev stack.** `docker-smoke` ends in
+  `docker compose down`, and the compose services use
+  `restart: unless-stopped`, so running verify against a live demo session
+  will take it down. Expected given what the target is for, but worth
+  knowing before running it mid-demo.
+- **FR3's processing state needs a manual "Refresh status" click.** The UI
+  shows `queued…`/`started…`/`N chunks indexed`, but does not poll — the
+  state only advances when the button is pressed. A real fix means either a
+  polling loop or a component like `streamlit-autorefresh`, and neither is a
+  new moving part worth introducing this late.

@@ -14,6 +14,7 @@ jobs:
       - run: make test
       - run: make lint
       - run: make no-hardcoded
+      - run: make no-heavy-deps
 
 # docker-smoke is intentionally NOT run here: it needs a real LLM API key
 # to boot the app, and this workflow has no secrets configured (a fake key

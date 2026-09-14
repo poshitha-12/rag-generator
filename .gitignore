@@ -1,5 +1,6 @@
 chroma_store/
 eval/.chroma_eval/
+.DS_Store
 .env
 __pycache__/
 *.pyc
