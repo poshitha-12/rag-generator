@@ -12,3 +12,8 @@ pytest==8.3.3
 redis==5.0.8
 rq==1.16.2
 ruff==0.7.4
+# NFR4's eval harness (eval/run_eval.py) only - no extras, so no torch/CUDA
+# (NFR5); `make no-heavy-deps` enforces that. Pinned because a newer ragas
+# pulls an unconstrained `langchain`, which pip resolves to a langchain-core
+# past what langchain-anthropic==0.3.0 allows - recheck before bumping.
+ragas==0.2.15

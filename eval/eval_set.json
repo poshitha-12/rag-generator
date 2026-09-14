@@ -2,41 +2,52 @@
   {
     "collection": "company-handbook",
     "question": "What are the core working hours at Northwind?",
-    "expected_answer_keywords": ["10:00", "16:00"],
+    "expected_answer_keywords": [
+      "10:00",
+      "16:00"
+    ],
     "expected_source": "01-working-at-northwind.txt",
-    "reference": "Core working hours at Northwind are 10:00 to 16:00 local time.",
+    "reference_answer": "Core working hours at Northwind are 10:00 to 16:00 local time.",
     "should_refuse": false
   },
   {
     "collection": "company-handbook",
     "question": "How many days of paid annual leave do full-time employees receive per calendar year?",
-    "expected_answer_keywords": ["27"],
+    "expected_answer_keywords": [
+      "27"
+    ],
     "expected_source": "02-leave-and-expenses.pdf",
-    "reference": "Full-time employees receive 27 days of paid annual leave per calendar year.",
+    "reference_answer": "Full-time employees receive 27 days of paid annual leave per calendar year.",
     "should_refuse": false
   },
   {
     "collection": "company-handbook",
     "question": "How far in advance must I submit a leave request for an absence longer than a week?",
-    "expected_answer_keywords": ["six weeks"],
+    "expected_answer_keywords": [
+      "six weeks"
+    ],
     "expected_source": "02-leave-and-expenses.pdf",
-    "reference": "Leave requests for an absence longer than a week must be submitted at least six weeks in advance.",
+    "reference_answer": "Leave requests for an absence longer than a week must be submitted at least six weeks in advance.",
     "should_refuse": false
   },
   {
     "collection": "company-handbook",
     "question": "What chair allowance do new starters receive?",
-    "expected_answer_keywords": ["400"],
+    "expected_answer_keywords": [
+      "400"
+    ],
     "expected_source": "01-working-at-northwind.txt",
-    "reference": "New starters receive a chair allowance of £400.",
+    "reference_answer": "New starters receive a chair allowance of £400.",
     "should_refuse": false
   },
   {
     "collection": "company-handbook",
     "question": "What is the cap on client entertainment spending per head?",
-    "expected_answer_keywords": ["60"],
+    "expected_answer_keywords": [
+      "60"
+    ],
     "expected_source": "02-leave-and-expenses.pdf",
-    "reference": "Client entertainment is capped at £60 per head.",
+    "reference_answer": "Client entertainment is capped at £60 per head.",
     "should_refuse": false
   },
   {
@@ -52,41 +63,51 @@
   {
     "collection": "product-faq",
     "question": "How deep can the TS-40 sensor be deployed?",
-    "expected_answer_keywords": ["30"],
+    "expected_answer_keywords": [
+      "30"
+    ],
     "expected_source": "01-getting-started.txt",
-    "reference": "The TS-40 sensor is rated to a depth of 30 metres.",
+    "reference_answer": "The TS-40 sensor is rated to a depth of 30 metres.",
     "should_refuse": false
   },
   {
     "collection": "product-faq",
     "question": "How often should the pH and dissolved oxygen probes be calibrated in high-sediment water?",
-    "expected_answer_keywords": ["three months"],
+    "expected_answer_keywords": [
+      "three months"
+    ],
     "expected_source": "02-maintenance-and-support.md",
-    "reference": "In high-sediment water, the pH and dissolved oxygen probes should be calibrated every three months.",
+    "reference_answer": "In high-sediment water, the pH and dissolved oxygen probes should be calibrated every three months.",
     "should_refuse": false
   },
   {
     "collection": "product-faq",
     "question": "What does a fast red flash on the status light indicate?",
-    "expected_answer_keywords": ["battery"],
+    "expected_answer_keywords": [
+      "battery"
+    ],
     "expected_source": "02-maintenance-and-support.md",
-    "reference": "A fast red flash means the battery is below 5 percent.",
+    "reference_answer": "A fast red flash means the battery is below 5 percent.",
     "should_refuse": false
   },
   {
     "collection": "product-faq",
     "question": "During what hours is email support available?",
-    "expected_answer_keywords": ["08:00", "18:00"],
+    "expected_answer_keywords": [
+      "08:00",
+      "18:00"
+    ],
     "expected_source": "02-maintenance-and-support.md",
-    "reference": "Email support is available on weekdays between 08:00 and 18:00 UTC.",
+    "reference_answer": "Email support is available on weekdays between 08:00 and 18:00 UTC.",
     "should_refuse": false
   },
   {
     "collection": "product-faq",
     "question": "What does the warranty not cover?",
-    "expected_answer_keywords": ["batteries"],
+    "expected_answer_keywords": [
+      "batteries"
+    ],
     "expected_source": "02-maintenance-and-support.md",
-    "reference": "The warranty does not cover physical damage from impact, probe fouling, or batteries.",
     "should_refuse": false
   },
   {
