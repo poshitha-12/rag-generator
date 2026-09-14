@@ -102,15 +102,21 @@ streamlit run app/main.py
 ```
 rag-generator/
 ├── app/
-│   ├── main.py          # Streamlit entrypoint
-│   ├── ingestion.py      # document loading + chunking
-│   ├── vectorstore.py    # Chroma collection management
-│   ├── rag_chain.py       # retrieval + grounded generation
-│   ├── jobs.py            # Redis/RQ ingestion queue
+│   ├── main.py             # Streamlit entrypoint
+│   ├── ingestion.py        # document loading + chunking
+│   ├── vectorstore.py      # Chroma collection management
+│   ├── rag_chain.py        # retrieval + grounded generation
+│   ├── jobs.py             # Redis/RQ ingestion queue
 │   └── config.py
-├── data/                  # sample documents for demoing (two unrelated sets)
+├── eval/
+│   ├── run_eval.py         # NFR4 answer-quality harness (RAGAS)
+│   ├── eval_set.json       # questions written against the sample docs
+│   └── RESULTS.md          # generated scores - see Evaluation above
+├── data/                   # sample documents for demoing (two unrelated sets)
 ├── tests/
 ├── transcripts/            # exported AI agent build transcript
+├── .github/workflows/      # CI: test, lint, no-hardcoded, no-heavy-deps
+├── Makefile                # make verify - the harness (see above)
 ├── Dockerfile
 ├── docker-compose.yml
 └── requirements.txt
