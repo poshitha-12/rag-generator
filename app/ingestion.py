@@ -17,9 +17,21 @@ from app import config, vectorstore
 SUPPORTED_EXTENSIONS = (".pdf", ".docx", ".txt", ".md")
 
 # FR8: preferred split points, most structural first. Paragraph breaks win;
-# then single newlines; then sentence terminators; a bare space (or a raw
-# character cut) is only reached when one sentence is itself oversized.
-SEPARATORS = ["\n\n", "\n", ". ", "! ", "? ", " ", ""]
+# then sentence terminators; a bare space (or a raw character cut) is only
+# reached when one sentence is itself oversized.
+#
+# A lone "\n" ranks *below* sentence terminators deliberately. Source text
+# is often hard-wrapped at a fixed width, so a bare newline usually falls
+# mid-sentence rather than at a meaning boundary - ranking it above the
+# sentence terminators splits an oversized paragraph at the wrap column
+# instead of the sentence end, which is exactly what FR8 forbids.
+#
+# Each terminator is listed for both the space and the newline that can
+# follow it: in hard-wrapped text a sentence often ends exactly at the
+# wrap, so the boundary reads ".\n" rather than ". ". FR8 defines a
+# sentence boundary as the punctuation followed by *whitespace*, so both
+# spellings belong on the same tier.
+SEPARATORS = ["\n\n", ". ", ".\n", "! ", "!\n", "? ", "?\n", "\n", " ", ""]
 
 
 def _extension(filename: str) -> str:

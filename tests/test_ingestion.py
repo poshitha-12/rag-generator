@@ -9,6 +9,20 @@ from app.ingestion import chunk_documents, chunk_text, load_document
 TERMINATORS = (".", "!", "?", '"', ":", ";")
 
 
+def _hard_wrap(text: str, width: int) -> str:
+    """Wrap text at a fixed column, the way source documents often arrive -
+    producing real internal newlines inside a single paragraph."""
+    lines, line = [], ""
+    for word in text.split():
+        if line and len(line) + len(word) + 1 > width:
+            lines.append(line)
+            line = word
+        else:
+            line = f"{line} {word}".strip()
+    lines.append(line)
+    return "\n".join(lines)
+
+
 # --- FR1 / FR7 -------------------------------------------------------------
 def test_no_hardcoded_documents():
     """No sample document name, path or topic word may appear in app/.
@@ -95,6 +109,26 @@ def test_chunk_boundaries_are_sentence_aware():
     for chunk in chunks:
         for token in chunk.split():
             assert token in words, f"split landed mid-word: {token!r}"
+
+    # A hard-wrapped paragraph: one paragraph semantically, but carrying
+    # real internal newlines from being wrapped at a fixed width. The bare
+    # "\n" must NOT outrank sentence punctuation, or the split lands on the
+    # wrap column mid-sentence. Every sentence here is far shorter than the
+    # chunk size, so the oversized-sentence exemption above cannot apply.
+    sentences = [
+        f"The coordinator reviews carrier booking number {i} before it is confirmed."
+        for i in range(12)
+    ]
+    wrapped = _hard_wrap(" ".join(sentences), width=70)
+    assert "\n" in wrapped and "\n\n" not in wrapped, "fixture must be one wrapped paragraph"
+    assert len(wrapped) > 800 and max(len(s) for s in sentences) < 800
+
+    chunks = chunk_text(wrapped, chunk_size=800, chunk_overlap=100)
+    assert len(chunks) > 1, "fixture should be large enough to split"
+    for chunk in chunks:
+        assert chunk.endswith(TERMINATORS), (
+            f"hard-wrapped paragraph split mid-sentence at a line wrap: {chunk[-70:]!r}"
+        )
 
 
 def test_chunk_documents_attaches_citation_metadata():
