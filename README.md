@@ -126,6 +126,20 @@ without sourcing your own files. They are demo fixtures only — nothing in
 2. Upload document set B (an unrelated domain), ask questions — same app, zero code changes.
 3. Ask a question with no answer in the context — the system should say it doesn't know rather than hallucinate.
 
+## Evaluation
+
+`make verify` proves the *mechanism* works — retrieval feeds the prompt,
+citations are attached, the threshold refuses. It says nothing about whether
+the answers are actually right. [`eval/RESULTS.md`](eval/RESULTS.md) covers
+that: a hand-written set of questions
+([`eval/eval_set.json`](eval/eval_set.json)) written against what the sample
+documents genuinely say, run through the real query path against the real
+configured LLM. Each answerable row passes only if the answer contains the
+expected facts and cites sources from the right collection; each off-domain
+row passes only if the system refuses. Regenerate with `make eval` — it needs
+a live API key and spends tokens, which is exactly why it isn't part of
+`make verify`.
+
 ## Agentic engineering practices used to build this
 
 Three practices, each with a concrete artifact rather than just a claim:
@@ -170,6 +184,12 @@ the docker smoke test stays local since it needs a real API key to boot.
   FR6): the threshold refuses obvious misses cheaply, but the model still
   handles context that is retrieved and on-topic yet doesn't actually contain
   the answer.
+- The eval set is deliberately small and hand-written — keyword matching against
+  facts the documents actually state. A framework like RAGAS (faithfulness,
+  context-precision and context-recall scored by an LLM judge) is the natural
+  next step with more time; it would catch answers that are subtly unfaithful
+  to the retrieved context rather than merely missing a keyword, and would
+  score retrieval quality directly instead of inferring it from the answer.
 - No auth/multi-tenancy — out of scope for this exercise but noted as a next step.
 - No PR/branch workflow or pre-commit hook framework — for a solo, timeboxed
   build these add process overhead without much signal; commit-level

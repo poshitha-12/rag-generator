@@ -1,0 +1,82 @@
+[
+  {
+    "collection": "company-handbook",
+    "question": "What are the core working hours at Northwind?",
+    "expected_answer_keywords": ["10:00", "16:00"],
+    "should_refuse": false
+  },
+  {
+    "collection": "company-handbook",
+    "question": "How many days of paid annual leave do full-time employees receive per calendar year?",
+    "expected_answer_keywords": ["27"],
+    "should_refuse": false
+  },
+  {
+    "collection": "company-handbook",
+    "question": "How far in advance must I submit a leave request for an absence longer than a week?",
+    "expected_answer_keywords": ["six weeks"],
+    "should_refuse": false
+  },
+  {
+    "collection": "company-handbook",
+    "question": "What chair allowance do new starters receive?",
+    "expected_answer_keywords": ["400"],
+    "should_refuse": false
+  },
+  {
+    "collection": "company-handbook",
+    "question": "What is the cap on client entertainment spending per head?",
+    "expected_answer_keywords": ["60"],
+    "should_refuse": false
+  },
+  {
+    "collection": "company-handbook",
+    "question": "How often should the dissolved oxygen probe be recalibrated in high-sediment water?",
+    "should_refuse": true
+  },
+  {
+    "collection": "company-handbook",
+    "question": "Who is the current president of the United States?",
+    "should_refuse": true
+  },
+  {
+    "collection": "product-faq",
+    "question": "How deep can the TS-40 sensor be deployed?",
+    "expected_answer_keywords": ["30"],
+    "should_refuse": false
+  },
+  {
+    "collection": "product-faq",
+    "question": "How often should the pH and dissolved oxygen probes be calibrated in high-sediment water?",
+    "expected_answer_keywords": ["three months"],
+    "should_refuse": false
+  },
+  {
+    "collection": "product-faq",
+    "question": "What does a fast red flash on the status light indicate?",
+    "expected_answer_keywords": ["battery"],
+    "should_refuse": false
+  },
+  {
+    "collection": "product-faq",
+    "question": "During what hours is email support available?",
+    "expected_answer_keywords": ["08:00", "18:00"],
+    "should_refuse": false
+  },
+  {
+    "collection": "product-faq",
+    "question": "What does the warranty not cover?",
+    "expected_answer_keywords": ["batteries"],
+    "should_refuse": false
+  },
+  {
+    "collection": "product-faq",
+    "question": "How many days of paid annual leave do employees receive?",
+    "should_refuse": true
+  },
+  {
+    "collection": "product-faq",
+    "question": "What is the capital city of France?",
+    "should_refuse": true
+  }
+]

@@ -1,4 +1,4 @@
-.PHONY: verify test lint no-hardcoded no-heavy-deps docker-smoke
+.PHONY: verify test lint no-hardcoded no-heavy-deps docker-smoke eval
 
 # Single entry point for the agent (or you) to check the build against
 # SPEC.md. Run this after every meaningful change and keep iterating
@@ -33,3 +33,9 @@ docker-smoke:
 	sleep 8
 	curl -sf http://localhost:8501/_stcore/health || (docker compose logs && docker compose down && exit 1)
 	docker compose down
+
+# NFR4 — answer quality against the real LLM. Deliberately NOT part of
+# `verify`: it needs a live API key and spends tokens, and verify should
+# stay free and key-independent.
+eval:
+	python eval/run_eval.py

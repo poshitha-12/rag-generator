@@ -1,4 +1,5 @@
 chroma_store/
+eval/.chroma_eval/
 .env
 __pycache__/
 *.pyc
