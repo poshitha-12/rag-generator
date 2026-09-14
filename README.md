@@ -134,11 +134,26 @@ the answers are actually right. [`eval/RESULTS.md`](eval/RESULTS.md) covers
 that: a hand-written set of questions
 ([`eval/eval_set.json`](eval/eval_set.json)) written against what the sample
 documents genuinely say, run through the real query path against the real
-configured LLM. Each answerable row passes only if the answer contains the
-expected facts and cites sources from the right collection; each off-domain
-row passes only if the system refuses. Regenerate with `make eval` — it needs
-a live API key and spends tokens, which is exactly why it isn't part of
-`make verify`.
+configured LLM.
+
+Two independent signals per answerable question, not one conflated pass/fail:
+**retrieval-hit** (did the expected source file actually come back in the
+top-k) and **answer-correctness** (does the answer contain the expected
+facts). Off-domain questions are graded on whether the system refused. On top
+of that, [RAGAS](https://github.com/vibrantlabsai/ragas) scores the same run
+with an LLM-as-judge: **faithfulness** (is the answer actually supported by
+the retrieved context, not just superficially matching keywords), **context
+precision** and **context recall** (against a one-sentence `reference` answer
+per question) — a second, independent read on quality that keyword matching
+can't catch, like an answer that's factually present but padded with
+unsupported detail.
+
+Regenerate with `make eval` — it needs a live API key and spends tokens
+(RAGAS meaningfully more, since each metric is its own LLM call per
+question), which is why none of this is part of `make verify`. RAGAS needs
+`pip install -r eval/requirements.txt` first; it's kept out of the app's own
+`requirements.txt` since the Docker image never needs a judge model — see
+that file for why the version is pinned as it is.
 
 ## Agentic engineering practices used to build this
 
@@ -184,12 +199,16 @@ the docker smoke test stays local since it needs a real API key to boot.
   FR6): the threshold refuses obvious misses cheaply, but the model still
   handles context that is retrieved and on-topic yet doesn't actually contain
   the answer.
-- The eval set is deliberately small and hand-written — keyword matching against
-  facts the documents actually state. A framework like RAGAS (faithfulness,
-  context-precision and context-recall scored by an LLM judge) is the natural
-  next step with more time; it would catch answers that are subtly unfaithful
-  to the retrieved context rather than merely missing a keyword, and would
-  score retrieval quality directly instead of inferring it from the answer.
+- The eval set is still small and hand-written (14 questions) — enough to
+  exercise every requirement, not enough to be a statistically confident
+  quality benchmark. RAGAS's faithfulness/context-precision/context-recall
+  now run alongside the keyword-and-source checks, but `context_precision`
+  and `context_recall` both need a `reference` answer, so they only cover
+  the 10 answerable rows; a refusal has no answer for a judge to score. RAGAS
+  0.2.15 is pinned in `eval/requirements.txt` specifically because newer
+  releases pull an unconstrained `langchain` that upgrades `langchain-core`
+  past what `langchain-anthropic==0.3.0` allows — recheck compatibility
+  before bumping either.
 - No auth/multi-tenancy — out of scope for this exercise but noted as a next step.
 - No PR/branch workflow or pre-commit hook framework — for a solo, timeboxed
   build these add process overhead without much signal; commit-level
