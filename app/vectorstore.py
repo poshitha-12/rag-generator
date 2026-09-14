@@ -18,12 +18,13 @@ _embeddings = None
 
 
 def get_embeddings():
-    """Local sentence-transformers embeddings, loaded once per process."""
+    """Local (ONNX, no API key) embeddings, loaded once per process."""
     global _embeddings
     if _embeddings is None:
-        from langchain_community.embeddings import HuggingFaceEmbeddings
+        from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 
-        _embeddings = HuggingFaceEmbeddings(model_name=config.EMBEDDING_MODEL)
+        options = {"model_name": config.EMBEDDING_MODEL} if config.EMBEDDING_MODEL else {}
+        _embeddings = FastEmbedEmbeddings(**options)
     return _embeddings
 
 
