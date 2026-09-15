@@ -5,3 +5,4 @@ eval/.chroma_eval/
 __pycache__/
 *.pyc
 venv/
+docs/na
