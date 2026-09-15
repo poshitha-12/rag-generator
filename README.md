@@ -20,7 +20,15 @@ back-and-forth rather than just the prompts that kicked each step off.
 - Allows users to ask questions and receive grounded answers
 - Works with different document sets without code changes
 
+## Demo
+
+[`docs/demo.mp4`](docs/demo.mp4) — a short recorded walkthrough: upload,
+async ingestion, a grounded answer with citations, a refusal on an
+off-domain question, and a domain switch with zero code changes.
+
 ## Architecture
+
+![Architecture diagram](docs/final-architecture-diagram-interactive.png)
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the system diagram and
   the reasoning behind each design split (why ingestion is async and query
@@ -29,6 +37,9 @@ back-and-forth rather than just the prompts that kicked each step off.
 - [`docs/COMPONENTS.md`](docs/COMPONENTS.md) — what each module in `app/`
   does, and a worked example tracing one question end to end (including
   the refusal path).
+- [`docs/runtime-rag-architecture.svg`](docs/runtime-rag-architecture.svg) —
+  the same diagram as a plain vector source, if you want it outside the
+  image above.
 
 **Optional load balancer:** `docker-compose.lb.yml` runs 2 app replicas
 behind Nginx with sticky sessions (`ip_hash`), since Streamlit holds session
@@ -85,7 +96,10 @@ rag-generator/
 │   └── config.py
 ├── docs/
 │   ├── ARCHITECTURE.md     # diagram + design rationale
-│   └── COMPONENTS.md       # per-module breakdown + worked example
+│   ├── COMPONENTS.md       # per-module breakdown + worked example
+│   ├── demo.mp4            # recorded walkthrough (see Demo above)
+│   ├── final-architecture-diagram-interactive.png
+│   └── runtime-rag-architecture.svg
 ├── eval/
 │   ├── run_eval.py         # NFR4 answer-quality harness (RAGAS)
 │   ├── eval_set.json       # questions written against the sample docs
