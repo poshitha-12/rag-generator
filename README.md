@@ -4,6 +4,14 @@ A runtime RAG (Retrieval-Augmented Generation) application: upload any set of
 documents, get a grounded question-answering system over them — no code
 changes required to switch document sets.
 
+Every prompt used to build this, in the order it was run, is in
+[`prompts/`](prompts/) — [`prompts/threshold_run.log`](prompts/threshold_run.log)
+is the index (what each one did, and when it was run relative to the
+others); the numbered files it links to are the prompts themselves,
+verbatim. [`transcripts/build-transcript.md`](transcripts/build-transcript.md)
+is the resulting session transcript (see below) if you want the full
+back-and-forth rather than just the prompts that kicked each step off.
+
 ## Problem Statement
 
 - Accepts documents at runtime
@@ -114,6 +122,7 @@ rag-generator/
 │   └── RESULTS.md          # generated scores - see Evaluation above
 ├── data/                   # sample documents for demoing (two unrelated sets)
 ├── tests/
+├── prompts/                # every prompt used to build this, in order (see above)
 ├── transcripts/            # exported AI agent build transcript (see below)
 ├── .github/workflows/      # CI: test, lint, no-hardcoded, no-heavy-deps
 ├── Makefile                # make verify - the harness (see above)
