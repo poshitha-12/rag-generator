@@ -22,39 +22,13 @@ back-and-forth rather than just the prompts that kicked each step off.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph Client
-        UI[Streamlit UI<br/>upload + chat]
-    end
-    subgraph Queue
-        REDIS[(Redis)]
-        WORKER[RQ Worker]
-    end
-    subgraph Ingestion
-        LOAD[Loader<br/>pdf/docx/txt]
-        CHUNK[Chunker<br/>Recursive splitter]
-        EMB[Embedder<br/>FastEmbed local]
-    end
-    subgraph Storage
-        VDB[(ChromaDB<br/>per-collection)]
-    end
-    subgraph QueryPath
-        RET[Retriever<br/>vector candidates]
-        RERANK[Cross-encoder<br/>rerank to top-k]
-        GATE[Relevance floor<br/>refuse if below]
-        PROMPT[Prompt Builder<br/>context + question]
-        LLM[LLM API<br/>Claude / GPT]
-    end
-    UI -- upload docs --> REDIS
-    REDIS --> WORKER --> LOAD --> CHUNK --> EMB --> VDB
-    UI -- question + collection_id --> RET
-    VDB --> RET --> RERANK --> GATE --> PROMPT --> LLM --> UI
-```
-
-Uploads are enqueued to Redis and processed by an RQ worker, so ingesting a
-large document doesn't block the UI thread — the user sees a "processing"
-state and can query as soon as the job completes.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the system diagram and
+  the reasoning behind each design split (why ingestion is async and query
+  isn't, why collections are the isolation boundary, why the refusal gate
+  sits before the LLM call, deployment shape).
+- [`docs/COMPONENTS.md`](docs/COMPONENTS.md) — what each module in `app/`
+  does, and a worked example tracing one question end to end (including
+  the refusal path).
 
 **Optional load balancer:** `docker-compose.lb.yml` runs 2 app replicas
 behind Nginx with sticky sessions (`ip_hash`), since Streamlit holds session
@@ -66,14 +40,6 @@ you want to demo it:
 docker compose -f docker-compose.lb.yml up --build
 ```
 then open http://localhost:8080.
-
-### Why this satisfies "no code changes across document sets"
-
-Every uploaded batch of documents is embedded into its own **named ChromaDB
-collection**, created dynamically at upload time. Nothing in the codebase
-references a specific document, file path, or topic — the pipeline is generic
-over whatever is uploaded. Switching to a new domain means uploading new
-files and picking a new collection name in the UI, nothing else.
 
 ## Stack
 
@@ -117,6 +83,9 @@ rag-generator/
 │   ├── rag_chain.py        # retrieval + grounded generation
 │   ├── jobs.py             # Redis/RQ ingestion queue
 │   └── config.py
+├── docs/
+│   ├── ARCHITECTURE.md     # diagram + design rationale
+│   └── COMPONENTS.md       # per-module breakdown + worked example
 ├── eval/
 │   ├── run_eval.py         # NFR4 answer-quality harness (RAGAS)
 │   ├── eval_set.json       # questions written against the sample docs
