@@ -5,11 +5,12 @@ documents, get a grounded question-answering system over them — no code
 changes required to switch document sets.
 
 Every prompt used to build this, in the order it was run, is in
-[`prompts/`](prompts/) — [`prompts/threshold_run.log`](prompts/threshold_run.log)
+[`prompts/`](prompts/) — [`prompts/threshold_run.md`](prompts/threshold_run.md)
 is the index (what each one did, and when it was run relative to the
-others); the numbered files it links to are the prompts themselves,
-verbatim. [`transcripts/build-transcript.md`](transcripts/build-transcript.md)
-is the resulting session transcript (see below) if you want the full
+others; renamed from `.log` to `.md` so GitHub renders its table). The
+files it links to are the prompts themselves, verbatim.
+[`transcripts/build-transcript.md`](transcripts/build-transcript.md) is the
+resulting session transcript (see below) if you want the full
 back-and-forth rather than just the prompts that kicked each step off.
 
 ## Problem Statement
