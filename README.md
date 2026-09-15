@@ -114,7 +114,7 @@ rag-generator/
 │   └── RESULTS.md          # generated scores - see Evaluation above
 ├── data/                   # sample documents for demoing (two unrelated sets)
 ├── tests/
-├── transcripts/            # exported AI agent build transcript
+├── transcripts/            # exported AI agent build transcript (see below)
 ├── .github/workflows/      # CI: test, lint, no-hardcoded, no-heavy-deps
 ├── Makefile                # make verify - the harness (see above)
 ├── Dockerfile
@@ -179,6 +179,17 @@ for that piece (`git log --oneline` shows this directly). CI
 ([.github/workflows/verify.yml](.github/workflows/verify.yml)) runs the
 fast checks — tests, lint, the hardcoded-reference check — on every push;
 the docker smoke test stays local since it needs a real API key to boot.
+
+[`transcripts/build-transcript.md`](transcripts/build-transcript.md) is the
+fourth artifact: the actual agent session, exported from the Claude Code
+session log rather than written after the fact. It covers two sessions run
+back to back on the same repo — Phase 1 (FR1-FR8, the initial build) and
+Phase 2 (cross-encoder reranking, the RAGAS eval harness, and a completion
+audit) — spliced into one chronological file rather than kept as two,
+since it's one continuous build, just picked up again later. A third,
+later session that only asked questions about this transcript and fixed
+its timestamp formatting is deliberately left out, to stop the file
+growing every time someone asks about the file itself.
 
 ## Notes / trade-offs
 
